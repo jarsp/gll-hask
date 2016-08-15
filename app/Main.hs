@@ -328,5 +328,30 @@ g3LS3 _ inp ax st =
 
 ------ Dotfile Generation ------
 
+sppfToString sppf =
+    let fixInsert h ns =
+            S.foldl' (\h' n -> case n of
+                                 Pack _ _ _ _ l r -> 
+                                     if l == None 
+                                        then H.insert n (S.singleton r) h' 
+                                        else H.insert n (S.fromList [l, r]) h'
+                                 _ -> h')
+                   h ns
+        fixed = H.foldl' fixInsert sppf sppf
+        attr n = 
+            case n of
+              Node (NT s) i j -> [("label", s ++ ", " ++ show i ++ ", " ++ show j), ("fontsize", "10.0")]
+              Node (T s) i j -> [("label", s ++ ", " ++ show i ++ ", " ++ show j), ("fontsize", "10.0"), ("shape", "diamond")]
+              Inter s a b i j -> [("label", display s ++ " ::= " ++ display a ++ "." ++ display b ++ ", " ++ show i ++ ", " ++ show j), ("shape", "rect"),
+                                  ("fontsize", "10.0")]
+              -- Pack s a b i _ _ -> [("label", display s ++ " ::= " ++ display a ++ "." ++ display b ++ ", " ++ show i), ("fontsize", "8.0")]
+              Pack _ _ _ _ _ _ -> [("shape", "point")]
+              None -> [("label", "$"), ("fontsize", "10.0"), ("fillcolor", "red")]
+        elist = H.map S.toList fixed
+        f n = elist ! n
+        k = H.keys fixed
+        nlist = zip k k
+     in D.showDot $ D.netlistGraph attr f nlist
+
 main :: IO ()
 main = undefined
